@@ -1,6 +1,6 @@
 ## Ansible SSH Keys
 ```sh
 ssh-agent tcsh
-ssh-add ~/Documents/PSK/Keys/spmzt.gate.key.pem
+ssh-add ~/Documents/Keys/spmzt.key
 ```
 ansible-playbook -i inventory.txt amicitia/playbook.yml

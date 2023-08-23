@@ -1,5 +1,5 @@
 ---
-- name: Amicitia
+- name: overlay
   hosts: freebsd
   become: yes
   vars:
@@ -14,22 +14,22 @@
         file: ipam.yml
         name: ipam
 
-    - include: amicitia/playbook.yml
+    - include: tunnel/playbook.yml
       tags: tunnel
       when:
         - before_jail_installation
 
-    - include: sapientia/playbook.yml
+    - include: bgp/playbook.yml
       tags: bird
       when:
         - before_jail_installation
 
-    - include: frux/playbook.yml
+    - include: jail/playbook.yml
       tags: jails
       when:
         - before_jail_installation
 
     # At this moment we need manual actions here
-    - include: frux/ocserv.yml
+    - include: jail/ocserv.yml
       tags: jails
       when: ocserv

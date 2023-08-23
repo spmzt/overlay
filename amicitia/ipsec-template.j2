@@ -1,0 +1,54 @@
+connections {
+{% set host_ip = [] %}{% for server in groups['freebsd'] %}{% if hostvars[server]['ansible_facts']['default_ipv4']['address'] != ansible_host %}{{ host_ip.append(hostvars[server]['ansible_facts']) }}{% endif %}{% endfor %}
+{% for remote_host in host_ip %}
+{{ remote_host['hostname'] | replace('-','_') }} {
+    local_addrs  = {{ ansible_host }}
+    remote_addrs = {{ remote_host['default_ipv4']['address'] }}
+
+    local {
+        auth = psk
+        id = {{ ansible_host }}
+    }
+    remote {
+        auth = psk
+        id = {{ remote_host['default_ipv4']['address'] }}
+    }
+    children {
+        net-{{ remote_host['hostname'] | replace('-','_') }}_vxlan {
+            rekey_time = 5400
+            rekey_bytes = 500000000
+            rekey_packets = 1000000
+            esp_proposals = aes128gcm128-x25519
+
+            remote_ts = dynamic[udp/4789]
+            mode = transport
+            start_action = trap
+        }
+        net-{{ remote_host['hostname'] | replace('-','_') }}_gre {
+            rekey_time = 5400
+            rekey_bytes = 500000000
+            rekey_packets = 1000000
+            esp_proposals = aes128gcm128-x25519
+
+            local_ts = dynamic[gre]
+            remote_ts = dynamic[gre]
+            mode = transport
+            start_action = trap
+        }
+    }
+    version = 2
+    mobike = no
+    reauth_time = 10800
+    proposals = aes128-sha256-x25519
+}
+{% endfor %}
+}
+
+secrets {
+{% for remote_host in host_ip %}
+ike-{{ remote_host['hostname'] | replace('-','_') }} {
+	id = {{ remote_host['default_ipv4']['address'] }}
+	secret = {{ secret_key }}
+}
+{% endfor %}
+}

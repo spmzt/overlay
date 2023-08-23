@@ -1,0 +1,12 @@
+fb-node-1:
+  ocserv:
+    jail: 172.31.129.1
+    prefix: '24'
+fb-node-2:
+  ocserv:
+    jail: 172.31.130.1
+    prefix: '24'
+fb-node-3:
+  ocserv:
+    jail: 172.31.131.1
+    prefix: '24'

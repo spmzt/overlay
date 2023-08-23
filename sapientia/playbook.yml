@@ -1,0 +1,33 @@
+---
+    - include_vars:
+        file: vpn_ipam.yml
+        name: vpn_ipam
+    - include_vars:
+        file: jail_ipam.yml
+        name: jail_ipam
+    - name: Install Bird
+      community.general.pkgng:
+        name: bird
+        state: present
+    - name: Enable Bird
+      community.general.sysrc:
+        name: bird_enable
+        value: "YES"
+        state: present
+    - name: Configure Bird
+      ansible.builtin.template:
+        src: sapientia/bird-template.j2
+        dest: /usr/local/etc/bird.conf
+      vars:
+        secret_key: "kZbiFLa5y604V"
+    - name: Load tcpmd5 module
+      block:
+        - name: "Load tcpmd5 in runtime"
+          shell: "kldload tcpmd5 || true"
+        - name: "Persist tcpmd5"
+          community.general.sysrc:
+            name: kld_list
+            value: "tcpmd5"
+            state: value_present
+    - name: Start Bird Service
+      shell: "service bird start || service bird reload"

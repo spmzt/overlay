@@ -1,0 +1,5 @@
+sysrc ifconfig_e0b_{{ item }}="inet {{ jail_ipam[ansible_hostname]['epair1']['jail'] }}/{{ jail_ipam[ansible_hostname]['epair1']['prefix'] }}"
+sysrc ifconfig_e1b_{{ item }}="inet {{ jail_ipam[ansible_hostname]['epair2']['jail'] }}/{{ jail_ipam[ansible_hostname]['epair2']['prefix'] }}"
+sysrc defaultrouter="{{ jail_ipam[ansible_hostname]['epair2']['host'] }}"
+sysrc sshd_enable="YES"
+sysrc gateway_enable="YES"

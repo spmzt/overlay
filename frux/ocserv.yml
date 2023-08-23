@@ -1,0 +1,71 @@
+---
+    - include_vars:
+        file: vpn_ipam.yml
+        name: vpn_ipam
+    # Work with Freebsd-current (14)
+    # - name: bsdinstall jails
+    #   shell: bsdinstall jail /usr/local/jails/"{{ item }}"
+    #   environment:
+    #     SCRIPT: "/usr/local/jails/{{ item }}.template"
+    #   args:
+    #     creates: "/usr/local/jails/{{ item }}/bin"
+    #   loop: "{{ jails |  flatten(levels=1) }}"
+    - name: permit root login
+      replace:
+        path: "/usr/local/jails/{{ item }}/etc/ssh/sshd_config"
+        regexp: '^#(PermitRootLogin).*'
+        replace: '\1 yes'
+      loop: "{{ jails |  flatten(levels=1) }}"
+    - name: Configure RC in Jail
+      ansible.builtin.template:
+        src: frux/jail_rc-template.j2
+        dest: /usr/local/jails/{{ item }}/etc/rc.conf
+      with_items:
+        - "{{ jails | flatten(levels=1) }}"
+    - name: Create SSH directory
+      file:
+        path: /usr/local/jails/{{ item }}/root/.ssh
+        state: directory
+      loop: "{{ jails |  flatten(levels=1) }}"
+    - name: Copy SSH Key Inside Jail
+      ansible.builtin.copy:
+        src: authorized_keys
+        dest: /usr/local/jails/{{ item }}/root/.ssh/authorized_keys
+      loop: "{{ jails |  flatten(levels=1) }}"
+    - name: Install OCServ
+      community.general.pkgng:
+        name: ocserv
+        state: present
+        jail: overlay
+    - name: Enable OCServ
+      community.general.sysrc:
+        name: "ocserv_enable"
+        value: "YES"
+        jail: overlay
+    - name: Configure RC in Jail
+      ansible.builtin.template:
+        src: "frux/ocserv-template.j2"
+        dest: "/usr/local/jails/{{ item }}/usr/local/etc/ocserv/ocserv.conf"
+      with_items:
+        - "{{ jails | flatten(levels=1) }}"
+    - name: generate dh params
+      shell: jexec {{ item }} certtool --generate-dh-params --outfile /usr/local/etc/ocserv/dh.pem
+      with_items:
+        - "{{ jails | flatten(levels=1) }}"
+    - name: copy certificate to jail
+      copy:
+        src: frux/fullchain.pem
+        dest: "/usr/local/jails/{{ item }}/usr/local/etc/ocserv/fullchain.pem"
+    - name: copy certificate privkey to jail
+      copy:
+        src: frux/privkey.pem
+        dest: "/usr/local/jails/{{ item }}/usr/local/etc/ocserv/privkey.pem"
+        chmod: 0600
+    - name: copy ocpasswd to jail
+      copy:
+        src: frux/auth.passwd
+        dest: "/usr/local/jails/{{ item }}/usr/local/etc/ocserv/auth.passwd"
+        chmod: 0600
+    - name: start ocserv in jails
+      shell: "service -j {{ item }} start ocserv"
+      loop: "{{ jails | flatten(levels=1) }}"

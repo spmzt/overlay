@@ -1,0 +1,95 @@
+---
+    - name: increase fib table
+      shell: "echo net.fibs=4 | tee /boot/loader.conf.local"
+    - name: set allfibs
+      shell: "sed -i '' '/^net.add_addr_allfibs.*/d' /etc/sysctl.conf && echo net.add_addr_allfibs=1 | tee -a /etc/sysctl.conf"
+    - name: Install strongswan
+      community.general.pkgng:
+        name: strongswan
+        state: present
+    - name: Configure Strongswan
+      ansible.builtin.template:
+        src: amicitia/ipsec-template.j2
+        dest: /usr/local/etc/swanctl/conf.d/avaritia.conf
+      vars:
+        secret_key: "SOME_RANDOM_SECRET_WHICH_IS_REPLACED_ON_GITHUB"
+    - name: Start/Enable Strongswan Service
+      service:
+        name: "strongswan"
+        state: started
+        enabled: true
+      ignore_errors: true
+      async: 12
+      poll: 3
+    - name: Reload Strongswan
+      shell: swanctl -q
+    - name: Enable IPv4 Forwarding
+      community.general.sysrc:
+        name: gateway_enable
+        value: "YES"
+        state: present
+    - name: Enable IPv6 Forwarding
+      community.general.sysrc:
+        name: ipv6_gateway_enable
+        value: "YES"
+        state: present
+    - name: Set IPv4 Forwarding to 1
+      ansible.posix.sysctl:
+        name: net.inet.ip.forwarding
+        value: '1'
+        sysctl_set: true
+        state: present
+        reload: true
+    - name: Set IPv6 Forwarding to 1
+      ansible.posix.sysctl:
+        name: net.inet6.ip.forwarding
+        value: '1'
+        sysctl_set: true
+    - name: GRE Connectivity
+      block:
+        - name: clone gre interfaces
+          community.general.sysrc:
+            name: cloned_interfaces 
+            value: "{% for host in host_ip %} gre{{ loop.index0 }}{% endfor %}"
+            state: value_present
+        - name: create gre interfaces
+          community.general.sysrc:
+            name: "create_args_gre{{ item['num'] }}"
+            value: "tunnel {{ ansible_host }} {{ item['ip'] }}"
+            state: present
+          with_items:
+            - "{% set host_num = [] %}{% for num in range(host_ip|length|int) %}{{ host_num.append(num) }}{% endfor %}{% set hosts = [] %}{% for num in host_num %}{{ hosts.append({'num': num, 'ip': host_ip[num]['default_ipv4']['address']})}}{% endfor %}{{ hosts }}"
+        - name: set ipv4 ifconfig gre interfaces
+          community.general.sysrc:
+            name: "ifconfig_gre{{ item['num'] }}"
+            value: "inet {{ ipam[ansible_hostname][item['ip']['hostname']]['ip'] }} {{ ipam[item['ip']['hostname']][ansible_hostname]['ip'] }} netmask 255.255.255.252 descr {{ item['ip']['hostname'] }} up"
+            state: present
+          with_items:
+            - "{% set host_num = [] %}{% for num in range(host_ip|length|int) %}{{ host_num.append(num) }}{% endfor %}{% set hosts = [] %}{% for num in host_num %}{{ hosts.append({'num': num, 'ip': host_ip[num]})}}{% endfor %}{{ hosts }}"
+      vars:
+        host_ip: "{% set host_ip = [] %}{% for server in groups['freebsd'] %}{% if hostvars[server]['ansible_facts']['default_ipv4']['address'] != ansible_host %}{{ host_ip.append(hostvars[server]['ansible_facts']) }}{% endif %}{% endfor %}{{ host_ip }}"
+    - name: VXLAN Connectivity
+      block:
+        - name: clone vxlan interfaces
+          community.general.sysrc:
+            name: cloned_interfaces 
+            value: "{% for host in host_ip %} vxlan{{ loop.index0 }}{% endfor %}"
+            state: value_present
+        - name: create vxlan interfaces
+          community.general.sysrc:
+            name: "create_args_vxlan{{ item['num'] }}"
+            value: "vxlanid {{ ipam[ansible_hostname][item['ip']['hostname']]['vni'] }} vxlanlocal {{ ansible_host }} vxlanremote {{ item['ip']['default_ipv4']['address'] }}"
+            state: present
+          with_items:
+            - "{% set host_num = [] %}{% for num in range(host_ip|length|int) %}{{ host_num.append(num) }}{% endfor %}{% set hosts = [] %}{% for num in host_num %}{{ hosts.append({'num': num, 'ip': host_ip[num]})}}{% endfor %}{{ hosts }}"
+        - name: set ipv6 ifconfig vxlan interfaces
+          community.general.sysrc:
+            name: "ifconfig_vxlan{{ item }}_ipv6"
+            value: "inet6 accept_rtadv auto_linklocal up"
+            state: present
+          with_items:
+            - "{% set host_num = [] %}{% for num in range(host_ip|length|int) %}{{ host_num.append(num) }}{% endfor %}{{ host_num }}"
+      vars:
+        host_ip: "{% set host_ip = [] %}{% for server in groups['freebsd'] %}{% if hostvars[server]['ansible_facts']['default_ipv4']['address'] != ansible_host %}{{ host_ip.append(hostvars[server]['ansible_facts']) }}{% endif %}{% endfor %}{{ host_ip }}"
+    - name: Interfaces Cloneup
+      shell: "service netif cloneup"

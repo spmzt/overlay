@@ -1,0 +1,21 @@
+fb-node-1:
+  fb-node-2:
+    ip: 172.31.10.5
+    vni: 1
+  fb-node-3:
+    ip: 172.31.10.9
+    vni: 2
+fb-node-2:
+  fb-node-1:
+    ip: 172.31.10.6
+    vni: 1
+  fb-node-3:
+    ip: 172.31.10.14
+    vni: 3
+fb-node-3:
+  fb-node-1:
+    ip: 172.31.10.10
+    vni: 2
+  fb-node-2:
+    ip: 172.31.10.13
+    vni: 3

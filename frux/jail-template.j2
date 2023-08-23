@@ -1,0 +1,19 @@
+exec.start = "/bin/sh /etc/rc";
+exec.stop = "/bin/sh /etc/rc.shutdown";
+exec.clean;
+mount.devfs;
+devfs_ruleset = 6;
+{% for jail in jails %}
+{{ jail }} {
+    host.hostname = "{{ jail }}";
+    path = "/usr/local/jails/{{ jail }}";
+    exec.consolelog = "/var/log/jail_{{ jail }}.log";
+    vnet;
+    vnet.interface = "e{{ (( loop.index * 2 ) - 1) }}b_{{ jail }} e{{ ( loop.index * 2 )  }}b_{{ jail }}";
+    exec.prestart0  = "service netif cloneup";
+    exec.prestart1 = "/sbin/ifconfig e{{ (( loop.index * 2 ) - 1) }}a_{{ jail }} inet {{ jail_ipam[ansible_hostname]['epair1']['host']}}"
+    exec.prestart2 = "/sbin/ifconfig e{{ ( loop.index * 2 ) }}a_{{ jail }} inet {{ jail_ipam[ansible_hostname]['epair2']['host']}}"
+    exec.poststop0 = "/sbin/ifconfig e{{ (( loop.index * 2 ) - 1) }}a_{{ jail }} delete"
+    exec.poststop1 = "/sbin/ifconfig e{{ ( loop.index * 2 ) }}a_{{ jail }} delete"
+}
+{% endfor %}

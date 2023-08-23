@@ -1,0 +1,18 @@
+[freebsd]
+fb-node-1 ansible_host=192.168.0.10
+fb-node-2 ansible_host=192.168.0.20
+fb-node-3 ansible_host=192.168.0.30
+[freebsd:vars]
+ansible_ssh_user=spmzt
+ansible_port=22
+ansible_connection=paramiko
+ansible_python_interpreter=/usr/local/bin/python3.9
+ansible_become_user=root
+ansible_become_method=sudo
+[ipam]
+master_subnet=172.31.10.0/24
+prefix_length=30
+jail_master_subnet=172.31.0.0/24
+jail_prefix_length=30
+vpn_master_subnet=172.31.128.0/19
+vpn_prefix_length=24

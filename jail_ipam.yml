@@ -1,0 +1,33 @@
+fb-node-1:
+  epair1:
+    host: 172.31.0.6
+    jail: 172.31.0.5
+    prefix: '30'
+    vni: 1
+  epair2:
+    host: 172.31.0.10
+    jail: 172.31.0.9
+    prefix: '30'
+    vni: 2
+fb-node-2:
+  epair1:
+    host: 172.31.0.14
+    jail: 172.31.0.13
+    prefix: '30'
+    vni: 3
+  epair2:
+    host: 172.31.0.18
+    jail: 172.31.0.17
+    prefix: '30'
+    vni: 4
+fb-node-3:
+  epair1:
+    host: 172.31.0.22
+    jail: 172.31.0.21
+    prefix: '30'
+    vni: 5
+  epair2:
+    host: 172.31.0.26
+    jail: 172.31.0.25
+    prefix: '30'
+    vni: 6

@@ -18,7 +18,7 @@
       loop: "{{ jails |  flatten(levels=1) }}"
     - name: Configure RC in Jail
       ansible.builtin.template:
-        src: frux/jail_rc-template.j2
+        src: jail/jail_rc-template.j2
         dest: /usr/local/jails/{{ item }}/etc/rc.conf
       with_items:
         - "{{ jails | flatten(levels=1) }}"
@@ -44,7 +44,7 @@
         jail: overlay
     - name: Configure RC in Jail
       ansible.builtin.template:
-        src: "frux/ocserv-template.j2"
+        src: "jail/ocserv-template.j2"
         dest: "/usr/local/jails/{{ item }}/usr/local/etc/ocserv/ocserv.conf"
       with_items:
         - "{{ jails | flatten(levels=1) }}"
@@ -54,16 +54,16 @@
         - "{{ jails | flatten(levels=1) }}"
     - name: copy certificate to jail
       copy:
-        src: frux/fullchain.pem
+        src: jail/fullchain.pem
         dest: "/usr/local/jails/{{ item }}/usr/local/etc/ocserv/fullchain.pem"
     - name: copy certificate privkey to jail
       copy:
-        src: frux/privkey.pem
+        src: jail/privkey.pem
         dest: "/usr/local/jails/{{ item }}/usr/local/etc/ocserv/privkey.pem"
         chmod: 0600
     - name: copy ocpasswd to jail
       copy:
-        src: frux/auth.passwd
+        src: jail/auth.passwd
         dest: "/usr/local/jails/{{ item }}/usr/local/etc/ocserv/auth.passwd"
         chmod: 0600
     - name: start ocserv in jails

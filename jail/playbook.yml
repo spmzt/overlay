@@ -29,6 +29,23 @@
         name: "zroot/jails/{{ item }}"
         state: present
       loop: "{{ jails |  flatten(levels=1) }}"
+    - name: template bsdinstall script
+      copy:
+        dest: "/usr/local/jails/{{ item }}.template"
+        chmod: 0770
+        content: |
+          export BSDINSTALL_DISTDIR="/usr/freebsd-dist"
+          export nonInteractive="YES"
+          DISTRIBUTIONS="base.txz"
+          export nonInteractive="YES"
+      loop: "{{ jails |  flatten(levels=1) }}"
+    - name: bsdinstall jails
+      shell: bsdinstall jail /usr/local/jails/"{{ item }}"
+      environment:
+        SCRIPT: "/usr/local/jails/{{ item }}.template"
+      args:
+        creates: "/usr/local/jails/{{ item }}/bin"
+      loop: "{{ jails |  flatten(levels=1) }}"
     - name: Configure Devfs
       ansible.builtin.template:
         src: jail/devfs-template.j2

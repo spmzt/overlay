@@ -9,7 +9,7 @@
         state: present
     - name: Configure Strongswan
       ansible.builtin.template:
-        src: amicitia/ipsec-template.j2
+        src: tunnel/ipsec-template.j2
         dest: /usr/local/etc/swanctl/conf.d/avaritia.conf
       vars:
         secret_key: "SOME_RANDOM_SECRET_WHICH_IS_REPLACED_ON_GITHUB"

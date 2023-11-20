@@ -31,7 +31,7 @@
       loop: "{{ jails |  flatten(levels=1) }}"
     - name: Configure Devfs
       ansible.builtin.template:
-        src: frux/devfs-template.j2
+        src: jail/devfs-template.j2
         dest: /etc/devfs.conf
     - name: install jib script
       copy:
@@ -60,7 +60,7 @@
         - "{% set epairs = [] %}{% for jail in jails %}{{ epairs.append({ 'epair': ((loop.index * 2) - 1), 'jail': jail })}}{{ epairs.append({ 'epair': (loop.index * 2), 'jail': jail })}}{% endfor %}{{ epairs }}"
     - name: declare jails
       ansible.builtin.template:
-        src: frux/jail-template.j2
+        src: jail/jail-template.j2
         dest: /etc/jail.conf
     - name: start jails at startup
       community.general.sysrc:

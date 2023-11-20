@@ -16,7 +16,7 @@
         state: present
     - name: Configure Bird
       ansible.builtin.template:
-        src: sapientia/bird-template.j2
+        src: bgp/bird-template.j2
         dest: /usr/local/etc/bird.conf
       vars:
         secret_key: "kZbiFLa5y604V"
